@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1F6F6B">
+<meta name="description" content="أداة بسيطة لتسجيل المحاضرات وتنظيمها، تعمل بالكامل على جهازك دون إنترنت">
+<title>مُحاضِر — تسجيل المحاضرات</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="offline-banner" class="offline-banner hidden">لا يوجد اتصال بالإنترنت — كل شيء يعمل محليًا على جهازك</div>
+
+<!-- ===================== الصفحة الرئيسية ===================== -->
+<main id="view-home" class="view">
+  <header class="app-bar">
+    <h1 class="app-title">مُحاضِر</h1>
+    <p class="app-subtitle">تسجيلاتك، على جهازك فقط</p>
+  </header>
+
+  <div class="home-content">
+    <button id="btn-new-lecture" class="btn-primary btn-big" type="button">
+      <span class="icon-mic" aria-hidden="true"></span>
+      محاضرة جديدة
+    </button>
+
+    <div id="incomplete-card" class="incomplete-card hidden">
+      <div class="incomplete-head">
+        <span aria-hidden="true">⚠️</span>
+        <strong>تسجيل غير مكتمل</strong>
+      </div>
+      <p class="incomplete-name" id="incomplete-name">—</p>
+      <p class="incomplete-duration">المدة المحفوظة: <span id="incomplete-duration">00:00</span></p>
+      <div class="incomplete-actions">
+        <button id="btn-incomplete-resume" class="btn-secondary" type="button">استكمال</button>
+        <button id="btn-incomplete-save" class="btn-secondary" type="button">حفظ التسجيل</button>
+        <button id="btn-incomplete-delete" class="btn-danger-ghost" type="button">حذف</button>
+      </div>
+    </div>
+
+    <section class="lecture-list-section">
+      <h2 class="section-title">المحاضرات السابقة</h2>
+      <ul id="lecture-list" class="lecture-list"></ul>
+      <p id="empty-state" class="empty-state hidden">لا توجد محاضرات بعد. اضغط "محاضرة جديدة" للبدء.</p>
+    </section>
+  </div>
+</main>
+
+<!-- ===================== إنشاء محاضرة / التسجيل ===================== -->
+<main id="view-record" class="view hidden">
+  <header class="app-bar app-bar-nav">
+    <button id="btn-back-from-record" class="btn-icon" type="button" aria-label="رجوع">‹</button>
+    <h1 class="app-title-small">محاضرة جديدة</h1>
+    <span class="app-bar-spacer"></span>
+  </header>
+
+  <div class="record-content">
+    <label class="field-label" for="lecture-name-input">اسم المحاضرة</label>
+    <input id="lecture-name-input" class="text-input" type="text" placeholder="مثال: محاضرة الفيزياء ٣" maxlength="80">
+
+    <div class="record-stage">
+      <div id="record-status-dot" class="status-dot status-idle"></div>
+      <div id="record-status-text" class="record-status-text">جاهز للتسجيل</div>
+      <div id="record-timer" class="record-timer">00:00:00</div>
+
+      <button id="btn-toggle-record" class="record-button" type="button" aria-label="بدء التسجيل">
+        <span id="record-button-icon" class="record-button-icon"></span>
+      </button>
+
+      <p id="record-hint" class="record-hint">اضغط للبدء — سيُطلب إذن استخدام الميكروفون</p>
+    </div>
+  </div>
+</main>
+
+<!-- ===================== تفاصيل المحاضرة ===================== -->
+<main id="view-detail" class="view hidden">
+  <header class="app-bar app-bar-nav">
+    <button id="btn-back-from-detail" class="btn-icon" type="button" aria-label="رجوع">‹</button>
+    <h1 id="detail-title" class="app-title-small">المحاضرة</h1>
+    <button id="btn-rename" class="btn-icon" type="button" aria-label="إعادة تسمية">✎</button>
+  </header>
+
+  <div class="detail-content">
+    <p id="detail-meta" class="detail-meta">—</p>
+
+    <div class="player-card">
+      <button id="btn-play" class="player-button" type="button" aria-label="تشغيل">▶</button>
+      <div class="player-info">
+        <div class="player-progress">
+          <div id="player-progress-bar" class="player-progress-bar"></div>
+        </div>
+        <div class="player-times">
+          <span id="player-current">00:00</span>
+          <span id="player-total">00:00</span>
+        </div>
+      </div>
+    </div>
+    <audio id="audio-player" preload="metadata"></audio>
+
+    <label class="field-label" for="notes-textarea">الملاحظات</label>
+    <textarea id="notes-textarea" class="notes-textarea" placeholder="اكتب ملاحظاتك هنا..." rows="8"></textarea>
+    <p id="notes-saved-hint" class="notes-saved-hint hidden">تم الحفظ</p>
+
+    <button id="btn-delete-lecture" class="btn-danger-ghost btn-full" type="button">حذف المحاضرة</button>
+  </div>
+</main>
+
+<!-- نافذة تأكيد الحذف -->
+<div id="confirm-overlay" class="overlay hidden">
+  <div class="confirm-box">
+    <p id="confirm-message" class="confirm-message">هل أنت متأكد؟</p>
+    <div class="confirm-actions">
+      <button id="confirm-cancel" class="btn-secondary" type="button">إلغاء</button>
+      <button id="confirm-ok" class="btn-danger" type="button">حذف</button>
+    </div>
+  </div>
+</div>
+
+<!-- نافذة إعادة التسمية -->
+<div id="rename-overlay" class="overlay hidden">
+  <div class="confirm-box">
+    <p class="confirm-message">إعادة تسمية المحاضرة</p>
+    <input id="rename-input" class="text-input" type="text" maxlength="80">
+    <div class="confirm-actions">
+      <button id="rename-cancel" class="btn-secondary" type="button">إلغاء</button>
+      <button id="rename-ok" class="btn-primary" type="button">حفظ</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast hidden"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
